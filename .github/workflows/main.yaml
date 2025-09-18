@@ -44,8 +44,8 @@ jobs:
         GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
         sed -i "16s|.*|      - image: $DOCKER_REPOSITORY:$GIT_HASH|g" deployment.yaml
         git add .
-        git config --global user.email "itssp0405@gmail.com"
-        git config --global user.name "johnlee"
+        git config --global user.email "bespin.cicd@gmail.com"
+        git config --global user.name "Seungsuk Ryoo"
         git commit -am "Inject Tag"
         git push
 
