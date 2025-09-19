@@ -20,32 +20,37 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Login to Docker Hub
       run: |
         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+
     - name: Build, tag, and push image to Docker Hub
       id: build-image
       run: |
         GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
         docker build -t $DOCKER_REPOSITORY:$GIT_HASH .
         docker push $DOCKER_REPOSITORY:$GIT_HASH
-        echo "::set-output name=image::$DOCKER_REPOSITORY:$GIT_HASH"
+        echo "image=$DOCKER_REPOSITORY:$GIT_HASH" >> $GITHUB_OUTPUT
+        # 최신 문법: $GITHUB_OUTPUT 파일에 작성
+        #echo "::set-output name=image::$DOCKER_REPOSITORY:$GIT_HASH"
         
     - name: Repository checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: bespin-cicd/argocd-kube
         token: ${{ secrets.MY_GITHUB_TOKEN }}
+        path: argocd   # 다른 리포는 별도 경로에 체크아웃 권장
 
     - name: Add date and push
       run: |
         GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
-        sed -i "16s|.*|      - image: $DOCKER_REPOSITORY:$GIT_HASH|g" deployment.yaml
-        git add .
+        #sed -i "16s|.*|      - image: $DOCKER_REPOSITORY:$GIT_HASH|g" deployment.yaml
+        sed -i "16s|.*|      - image: $DOCKER_REPOSITORY:$GIT_HASH|g" argocd/deployment.yaml
         git config --global user.email "bespin.cicd@gmail.com"
         git config --global user.name "Seungsuk Ryoo"
-        git commit -am "Inject Tag"
+        git add .
+        git commit -am "Inject Tag" || echo "No changes to commit"
         git push
 
